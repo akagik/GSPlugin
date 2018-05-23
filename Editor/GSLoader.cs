@@ -5,6 +5,8 @@ using UnityEngine.Networking;
 
 namespace GSPlugin
 {
+    // スプレッドシートをウェブから引っ張ってきて CsvData に変換する.
+    // エントリポイントは LoadGS.
     public class GSLoader
     {
         public static readonly string WORKSHEET_LIST_URL = "https://spreadsheets.google.com/feeds/worksheets/{0}/public/full?alt=json";
