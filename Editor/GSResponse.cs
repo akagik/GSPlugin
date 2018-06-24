@@ -8,7 +8,7 @@ namespace GSPlugin
     /// 
     /// 2つのレスポンス両方に対応している。
     /// 
-    /// !!!$" を "_d_" としてみなしている点に注意!!!
+    /// !!!"$" を "_d_" としてみなしている点に注意!!!
     /// </summary>
     [Serializable]
     public class GSResponse

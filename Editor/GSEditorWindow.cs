@@ -1,89 +1,111 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.IO;
 
-namespace GSPlugin
-{
-    public class GSEditorWindow : EditorWindow
-    {
+namespace GSPlugin {
+    public class GSEditorWindow : EditorWindow {
         public GSPluginSettings settings;
         private bool isDownloading;
+        private Vector2 scrollPosition;
 
         [MenuItem("Window/GSPlugin", false, 0)]
-        static public void OpenWindow()
-        {
+        static public void OpenWindow() {
             EditorWindow.GetWindow<GSEditorWindow>(false, "GSPlugin", true).Show();
         }
 
-        void OnEnable()
-        {
+        void OnEnable() {
             string[] settingGUIDArray = AssetDatabase.FindAssets("t:GSPluginSettings");
 
-            foreach (string guid in settingGUIDArray)
-            {
+            foreach (string guid in settingGUIDArray) {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 settings = AssetDatabase.LoadAssetAtPath<GSPluginSettings>(path);
             }
         }
 
-        void OnGUI()
-        {
+        void OnGUI() {
             settings = EditorGUILayout.ObjectField("Settings", settings, typeof(GSPluginSettings), false) as GSPluginSettings;
 
-            if (GUILayout.Button("Download", "LargeButtonMid") && !isDownloading)
-            {
-                isDownloading = true;
+            scrollPosition = GUILayout.BeginScrollView(scrollPosition);
 
-                float progress = 0f;
-                int i = 0;
-                show_progress(progress, i, settings.sheets.Length);
+            for (int i = 0; i < settings.sheets.Length; i++) {
+                var sheet = settings.sheets[i];
 
-                foreach (var ss in settings.sheets)
-                {
-                    string sheetId = ss.sheetId;
-                    string gid = ss.gid;
+                GUILayout.BeginHorizontal("box");
+                GUILayout.Label(sheet.targetPath);
 
-                    CsvData csvData = GSLoader.LoadGS(sheetId, gid);
-
-                    if (csvData != null)
-                    {
-                        string fileName = string.Format("{0}.{1}", ss.fileName, ss.isCsv ? "csv" : "asset");
-                        string path = Path.Combine("Assets", Path.Combine(ss.downloadFolder, fileName));
-
-                        if (ss.isCsv)
-                        {
-                            using (var s = new StreamWriter(path))
-                            {
-                                s.Write(csvData.ToString());
-                            }
-                        }
-                        else
-                        {
-                            AssetDatabase.CreateAsset(csvData, path);
-                        }
-                        progress = (float)(++i) / settings.sheets.Length;
-                        Debug.Log("Write " + path);
-                        show_progress(progress, i, settings.sheets.Length);
-                    }
-                    else
-                    {
-                        Debug.LogError("Fails for " + ss.ToString());
-                    }
+                if (GUILayout.Button("Download", GUILayout.Width(80)) && !isDownloading) {
+                    isDownloading = true;
+                    DownloadOne(sheet);
+                    isDownloading = false;
                 }
 
-                AssetDatabase.Refresh();
-                EditorUtility.ClearProgressBar();
+                GUILayout.EndHorizontal();
+            }
+
+            if (GUILayout.Button("DownloadAll", "LargeButtonMid") && !isDownloading) {
+                isDownloading = true;
+
+                var sheets = new List<GSPluginSettings.Sheet>(settings.sheets);
+                DownloadAll(sheets);
                 isDownloading = false;
+            }
+
+            GUILayout.EndScrollView();
+        }
+
+        private void DownloadAll(List<GSPluginSettings.Sheet> sheets) {
+            float progress = 0f;
+            int i = 0;
+
+            foreach (var ss in sheets) {
+                show_progress(ss.targetPath, progress, i, sheets.Count);
+                Download(ss);
+
+                progress = (float)(++i) / sheets.Count;
+            }
+            show_progress("", progress, i, sheets.Count);
+
+            AssetDatabase.Refresh();
+            EditorUtility.ClearProgressBar();
+        }
+
+        private void DownloadOne(GSPluginSettings.Sheet sheet) {
+            show_progress(sheet.targetPath, 0f, 0, 1);
+            Download(sheet);
+            show_progress(sheet.targetPath, 1f, 1, 1);
+            AssetDatabase.Refresh();
+            EditorUtility.ClearProgressBar();
+        }
+
+        public void Download(GSPluginSettings.Sheet ss) {
+            string sheetId = ss.sheetId;
+            string gid = ss.gid;
+
+            CsvData csvData = GSLoader.LoadGS(sheetId, gid);
+
+            if (csvData != null) {
+                if (ss.isCsv) {
+                    using (var s = new StreamWriter(ss.targetPath)) {
+                        s.Write(csvData.ToString());
+                    }
+                }
+                else {
+                    AssetDatabase.CreateAsset(csvData, ss.targetPath);
+                }
+                Debug.Log("Write " + ss.targetPath);
+            }
+            else {
+                Debug.LogError("Fails for " + ss.ToString());
             }
         }
 
-        private void show_progress(float progress, int i, int total) {
-            EditorUtility.DisplayProgressBar("Progress", progress_msg(i, total), progress);
+        private void show_progress(string path, float progress, int i, int total) {
+            EditorUtility.DisplayProgressBar("Progress", progress_msg(path, i, total), progress);
         }
 
-        private string progress_msg(int i, int total) 
-        {
-            return string.Format("Downloading ({0}/{1})", i, total);
+        private string progress_msg(string path, int i, int total) {
+            return string.Format("Downloading {0} ({1}/{2})", path, i, total);
         }
 
         //void OnInspectorUpdate()
