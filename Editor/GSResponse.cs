@@ -1,7 +1,6 @@
 using System;
 
-namespace GSPlugin
-{
+namespace GSPlugin {
     /// <summary>
     /// Google Spreadsheet URL からのレスポンスの json を
     /// このオブジェクトに変換する.
@@ -11,8 +10,7 @@ namespace GSPlugin
     /// !!!"$" を "_d_" としてみなしている点に注意!!!
     /// </summary>
     [Serializable]
-    public class GSResponse
-    {
+    public class GSResponse {
         public Feed feed;
 
         [Serializable]
@@ -28,24 +26,21 @@ namespace GSPlugin
         }
 
         [Serializable]
-        public class Entry
-        {
+        public class Entry {
             public Title title;
             public Link[] link;
             public Cell gs_d_cell;
         }
 
         [Serializable]
-        public class Link
-        {
+        public class Link {
             public string rel;
             public string type;
             public string href;
         }
 
         [Serializable]
-        public class Cell
-        {
+        public class Cell {
             public int row;
             public int col;
             public string inputValue;

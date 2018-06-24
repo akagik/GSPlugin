@@ -3,16 +3,13 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.Networking;
 
-namespace GSPlugin
-{
+namespace GSPlugin {
     // スプレッドシートをウェブから引っ張ってきて CsvData に変換する.
     // エントリポイントは LoadGS.
-    public class GSLoader
-    {
+    public class GSLoader {
         public static readonly string WORKSHEET_LIST_URL = "https://spreadsheets.google.com/feeds/worksheets/{0}/public/full?alt=json";
 
-        public static string ExtractGID(string url)
-        {
+        public static string ExtractGID(string url) {
             Uri uri = new Uri(url);
             string query = uri.Query;
             string gid = "";
@@ -23,12 +20,10 @@ namespace GSPlugin
 
             int len = leftovers.IndexOf("&", StringComparison.OrdinalIgnoreCase) + 1;
 
-            if (len == 0)
-            {
+            if (len == 0) {
                 gid = query.Substring(firstIndex);
             }
-            else
-            {
+            else {
                 gid = query.Substring(firstIndex, len - 1);
             }
 
@@ -42,21 +37,17 @@ namespace GSPlugin
         /// まず一つ目は sheetId に対する複数の worksheet を持つ URL へのリクエスト。
         /// 二つ目は その sheetId の中で特定の gid を持つ URL へのリクエスト。
         /// </summary>
-        public static CsvData LoadGS(string sheetId, string gid)
-        {
+        public static CsvData LoadGS(string sheetId, string gid) {
             // Load spread sheet
             List<GSWorksheet> worksheets = downloadWorksheets(sheetId);
 
-            if (worksheets == null)
-            {
+            if (worksheets == null) {
                 return null;
             }
 
             // Load each worksheet
-            foreach (GSWorksheet sheet in worksheets)
-            {
-                if (sheet.gid != gid)
-                {
+            foreach (GSWorksheet sheet in worksheets) {
+                if (sheet.gid != gid) {
                     continue;
                 }
 
@@ -69,8 +60,7 @@ namespace GSPlugin
             return null;
         }
 
-        public static CsvData LoadCsvData(GSWorksheet sheet)
-        {
+        public static CsvData LoadCsvData(GSWorksheet sheet) {
             string title = sheet.title;
             string url = sheet.link;
 
@@ -78,17 +68,14 @@ namespace GSPlugin
 
             var op = req.SendWebRequest();
 
-            while (!op.isDone)
-            {
+            while (!op.isDone) {
             }
 
-            if (req.isNetworkError)
-            {
+            if (req.isNetworkError) {
                 Debug.Log(req.error);
                 return null;
             }
-            else if (req.responseCode != 200)
-            {
+            else if (req.responseCode != 200) {
                 return null;
             }
 
@@ -97,15 +84,13 @@ namespace GSPlugin
             resJson = resJson.Replace("$", "_d_");
             GSResponse response = JsonUtility.FromJson<GSResponse>(resJson);
 
-            if (response == null || response.feed == null)
-            {
+            if (response == null || response.feed == null) {
                 return null;
             }
 
             List<List<string>> cellList = new List<List<string>>();
 
-            foreach (GSResponse.Entry entry in response.feed.entry)
-            {
+            foreach (GSResponse.Entry entry in response.feed.entry) {
                 var cell = entry.gs_d_cell;
 
                 int row = cell.row;
@@ -127,24 +112,20 @@ namespace GSPlugin
         }
 
 
-        static List<GSWorksheet> downloadWorksheets(string sheetId)
-        {
+        static List<GSWorksheet> downloadWorksheets(string sheetId) {
             string url_worksheet = string.Format(WORKSHEET_LIST_URL, sheetId);
             UnityWebRequest req = UnityWebRequest.Get(url_worksheet);
 
             var op = req.SendWebRequest();
 
-            while (!op.isDone)
-            {
+            while (!op.isDone) {
             }
 
-            if (req.isNetworkError)
-            {
+            if (req.isNetworkError) {
                 Debug.Log(req.error);
                 return null;
             }
-            else if (req.responseCode != 200)
-            {
+            else if (req.responseCode != 200) {
                 return null;
             }
 
@@ -152,39 +133,33 @@ namespace GSPlugin
             workSheetText = workSheetText.Replace("$", "_d_");
             GSResponse response = JsonUtility.FromJson<GSResponse>(workSheetText);
 
-            if (response == null || response.feed == null)
-            {
+            if (response == null || response.feed == null) {
                 return null;
             }
 
             List<GSWorksheet> worksheets = new List<GSWorksheet>();
 
-            foreach (GSResponse.Entry entry in response.feed.entry)
-            {
+            foreach (GSResponse.Entry entry in response.feed.entry) {
                 string worksheetTitle = entry.title._d_t;
 
                 GSWorksheet worksheet = new GSWorksheet(worksheetTitle);
                 bool gid_check = false;
                 bool cells_check = false;
 
-                foreach (GSResponse.Link link in entry.link)
-                {
+                foreach (GSResponse.Link link in entry.link) {
                     string url = link.href;
 
-                    if (url.Contains("/cells/"))
-                    {
+                    if (url.Contains("/cells/")) {
                         worksheet.link = url + "?alt=json";
                         cells_check = true;
                     }
 
-                    if (url.Contains("gid="))
-                    {
+                    if (url.Contains("gid=")) {
                         worksheet.gid = ExtractGID(url);
                         gid_check = true;
                     }
 
-                    if (cells_check && gid_check)
-                    {
+                    if (cells_check && gid_check) {
                         break;
                     }
                 }
@@ -193,14 +168,12 @@ namespace GSPlugin
             return worksheets;
         }
 
-        public class GSWorksheet
-        {
+        public class GSWorksheet {
             public string title;
             public string link;
             public string gid;
 
-            public GSWorksheet(string title)
-            {
+            public GSWorksheet(string title) {
                 this.title = title;
             }
         }
