@@ -86,6 +86,11 @@ namespace GSPlugin {
 
             if (csvData != null) {
                 if (ss.isCsv) {
+                    if (!Directory.Exists(Path.Combine("Assets", ss.downloadFolder))) {
+                        Debug.LogError("指定のフォルダは存在しません: " + ss.downloadFolder);
+                        return;
+                    }
+
                     using (var s = new StreamWriter(ss.targetPath)) {
                         s.Write(csvData.ToString());
                     }
