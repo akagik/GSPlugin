@@ -3,6 +3,10 @@ using System.IO;
 using UnityEngine;
 using UnityEditor;
 
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+#endif
+
 namespace GSPlugin {
     public class GSPluginSettings : ScriptableObject {
         public Sheet[] sheets;
@@ -31,6 +35,10 @@ namespace GSPlugin {
         [Serializable]
         public class Sheet {
             public string fileName;
+
+#if ODIN_INSPECTOR
+            [FolderPath(ParentFolder = "Assets", RequireExistingPath = true)]
+#endif
             public string downloadFolder;
 
             public string targetPath {
