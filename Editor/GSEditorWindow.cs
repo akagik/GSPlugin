@@ -38,6 +38,8 @@ namespace GSPlugin {
                     isDownloading = true;
                     DownloadOne(sheet);
                     isDownloading = false;
+
+                    GUIUtility.ExitGUI();
                 }
 
                 GUILayout.EndHorizontal();
@@ -49,6 +51,8 @@ namespace GSPlugin {
                 var sheets = new List<GSPluginSettings.Sheet>(settings.sheets);
                 DownloadAll(sheets);
                 isDownloading = false;
+
+                GUIUtility.ExitGUI();
             }
 
             GUILayout.EndScrollView();
