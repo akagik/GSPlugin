@@ -73,6 +73,7 @@ namespace GSPlugin {
                 for (int j = 0; j < col; j++) {
                     string value = Get(i, j);
                     value = value.Replace("\"", "\"\"");
+                    value = value.Replace("\n", "\\n");
                     s += "\"" + value + "\", ";
                 }
                 s = s.Substring(0, s.Length - 2);

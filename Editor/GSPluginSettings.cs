@@ -39,7 +39,7 @@ namespace GSPlugin {
 #if ODIN_INSPECTOR
             [FolderPath(ParentFolder = "Assets", RequireExistingPath = true)]
 #endif
-            public string downloadFolder;
+            public string downloadFolder = "";
 
             public string targetPath {
                 get {
