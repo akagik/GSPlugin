@@ -5,9 +5,14 @@ using System.IO;
 
 namespace GSPlugin {
     public class GSEditorWindow : EditorWindow {
+        public static string SETTINGS_KEY = "GSPlugin/settings";
+
         public GSPluginSettings settings;
         private bool isDownloading;
         private Vector2 scrollPosition;
+
+        // 二重に保存しないようにするために導入
+        private string savedGUID;
 
         [MenuItem("Window/GSPlugin", false, 0)]
         static public void OpenWindow() {
@@ -15,12 +20,22 @@ namespace GSPlugin {
         }
 
         void OnEnable() {
-            string[] settingGUIDArray = AssetDatabase.FindAssets("t:GSPluginSettings");
+            string guid = EditorUserSettings.GetConfigValue(SETTINGS_KEY);
+            string path = AssetDatabase.GUIDToAssetPath(guid);
 
-            foreach (string guid in settingGUIDArray) {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
+            if (path != "") {
+                // Debug.Log("Found prefs settings GUID: " + EditorPrefs.GetString(SETTINGS_KEY));
                 settings = AssetDatabase.LoadAssetAtPath<GSPluginSettings>(path);
+                // string[] settingGUIDArray = AssetDatabase.FindAssets("t:GSPluginSettings");
             }
+            else {
+                // Debug.Log("Not Found GUID");
+            }
+
+            // foreach (string guid in settingGUIDArray) {
+            //     string path = AssetDatabase.GUIDToAssetPath(guid);
+            //     settings = AssetDatabase.LoadAssetAtPath<GSPluginSettings>(path);
+            // }
         }
 
         void OnGUI() {
@@ -28,31 +43,48 @@ namespace GSPlugin {
 
             scrollPosition = GUILayout.BeginScrollView(scrollPosition);
 
-            for (int i = 0; i < settings.sheets.Length; i++) {
-                var sheet = settings.sheets[i];
+            if (settings != null) {
+                // セットされている settings 情報を EditorUserSettings に保存する.
+                {
+                    string guid;
+                    long localId;
 
-                GUILayout.BeginHorizontal("box");
-                GUILayout.Label(sheet.targetPath);
+                    if(AssetDatabase.TryGetGUIDAndLocalFileIdentifier(settings, out guid, out localId)) {
+                        if (savedGUID != guid) {
+                            // Debug.Log("Save GUID(" + guid + ") at " + SETTINGS_KEY);
+                            EditorPrefs.SetString(SETTINGS_KEY, guid);
+                            EditorUserSettings.SetConfigValue(SETTINGS_KEY, guid);
+                            savedGUID = guid;
+                        }
+                    }
+                }
 
-                if (GUILayout.Button("Download", GUILayout.Width(80)) && !isDownloading) {
+                for (int i = 0; i < settings.sheets.Length; i++) {
+                    var sheet = settings.sheets[i];
+
+                    GUILayout.BeginHorizontal("box");
+                    GUILayout.Label(sheet.targetPath);
+
+                    if (GUILayout.Button("Download", GUILayout.Width(80)) && !isDownloading) {
+                        isDownloading = true;
+                        DownloadOne(sheet);
+                        isDownloading = false;
+
+                        GUIUtility.ExitGUI();
+                    }
+
+                    GUILayout.EndHorizontal();
+                }
+
+                if (GUILayout.Button("DownloadAll", "LargeButtonMid") && !isDownloading) {
                     isDownloading = true;
-                    DownloadOne(sheet);
+
+                    var sheets = new List<GSPluginSettings.Sheet>(settings.sheets);
+                    DownloadAll(sheets);
                     isDownloading = false;
 
                     GUIUtility.ExitGUI();
                 }
-
-                GUILayout.EndHorizontal();
-            }
-
-            if (GUILayout.Button("DownloadAll", "LargeButtonMid") && !isDownloading) {
-                isDownloading = true;
-
-                var sheets = new List<GSPluginSettings.Sheet>(settings.sheets);
-                DownloadAll(sheets);
-                isDownloading = false;
-
-                GUIUtility.ExitGUI();
             }
 
             GUILayout.EndScrollView();
