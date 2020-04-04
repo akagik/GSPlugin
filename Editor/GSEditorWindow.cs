@@ -106,7 +106,7 @@ namespace GSPlugin {
             EditorUtility.ClearProgressBar();
         }
 
-        private void DownloadOne(GSPluginSettings.Sheet sheet) {
+        public static void DownloadOne(GSPluginSettings.Sheet sheet) {
             show_progress(sheet.targetPath, 0f, 0, 1);
             Download(sheet);
             show_progress(sheet.targetPath, 1f, 1, 1);
@@ -114,7 +114,7 @@ namespace GSPlugin {
             EditorUtility.ClearProgressBar();
         }
 
-        public void Download(GSPluginSettings.Sheet ss) {
+        public static void Download(GSPluginSettings.Sheet ss) {
             string sheetId = ss.sheetId;
             string gid = ss.gid;
 
@@ -141,11 +141,11 @@ namespace GSPlugin {
             }
         }
 
-        private void show_progress(string path, float progress, int i, int total) {
+        private static void show_progress(string path, float progress, int i, int total) {
             EditorUtility.DisplayProgressBar("Progress", progress_msg(path, i, total), progress);
         }
 
-        private string progress_msg(string path, int i, int total) {
+        private static string progress_msg(string path, int i, int total) {
             return string.Format("Downloading {0} ({1}/{2})", path, i, total);
         }
 
